@@ -8,7 +8,8 @@
  * Super simple server to handle feedback requests and log errors
  */
 
-var express = require('express');
+var express = require('express'),
+    fs = require('fs');
 
 var app = module.exports = express.createServer();
 
@@ -37,6 +38,12 @@ app.get('/', function(req, res){
   res.render('index', {
     title: 'Express'
   });
+});
+
+app.get('/filelist', function(req, res){
+  var contents = fs.readdirSync('/public/res/')
+  console.log(JSON.stringify(contents));
+  res.xhr(contents);
 });
 
 app.listen(3000);

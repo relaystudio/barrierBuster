@@ -18,6 +18,7 @@ var itemModel = Backbone.Model.extend({
 		_id: null
 		// Name of the content piece
 		, name: ""
+		, path: ""
 		// Duration is set by media type in millisecons, 
 		//so 30sec should be represented as 30 * 1000
 		, duration: 1000
@@ -80,6 +81,58 @@ var ItemCollection = new itemCollection;
 // 	 	, isActive: false
 //  	}
 // )
+
+/************************************************************
+		Primary title view (Living identity?)
+************************************************************/
+var itemEntryView = Backbone.View.extend({
+		el: $('#entryFormAnchor')
+		, enterTemplate: _.template($('#dataEntry').html())
+		, events: {
+			'click #submit' : 'saveOnClick'
+			, 'keypress .next' : 'saveOnEnter'
+			, 'keypress .next' : 'focusNext'
+		}
+		
+		, initialize: function() {
+//			$el.html(this.template);
+			if(MeaningList.timeLeftToday() > 0) {
+				$(this.el).hide().html(this.enterTemplate).trigger('entryViewDown').slideDown(700);
+			} else {
+				$(this.el).hide().html(this.failTemplate).slideDown(700);
+			}
+		}
+		, saveOnClick: function(e) {
+			this.save();
+			}
+		, saveOnEnter: function(e) {
+			if(e.keyCode !== 13) return;
+			this.save();
+		}
+		, save: function() {
+			// I need to put some validating methods here before passing off
+
+			newEntry = {
+				_id: 0
+				, name: $('input#name').val()
+				, path: $('input#path').val()
+				, duration: 1000
+				, barrier: $('input#barrierType').val()
+				, isActive: false
+			}
+			ItemCollection.create(newEntry);
+			this.done();
+		
+		}
+		, focusDuration: function(e) {
+			if(e.keyCode == 13)
+				$(this).next().focus();
+		}
+		, done: function() {
+			$(this.el).slideUp(100);
+		}
+	})
+
 
 
 /************************************************************

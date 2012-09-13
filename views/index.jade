@@ -4,8 +4,17 @@
 	ul#itemWrapper
 
 script#itemTemplate(type='text/template')
-	h2 Test
+	h2 <%= name %>
+	video
+		source(src=path,type='video/mp4',codecs='avc1.42E01E, mp4a.40.2')
 	
 
 script#livingIdentityTemplate(type='text/template')
 	h1 Living Identity Placeholder
+
+script#itemEntryTemplate(type='text/template')
+	form#itemEntry
+		input.next#name(type='text', placeholder='Name of title?')
+		input.next#path(type='text', placeholder='path (title in res)')
+		input.submit#barrierType(type='text', placeholder='barrier type')
+		a#submit.btn.btn-primary Submit!		
