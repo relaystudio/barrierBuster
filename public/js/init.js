@@ -130,7 +130,7 @@ var itemView = Backbone.View.extend({
 		this.bind('change', this.render, this);
 		this.bind('destroy', this.done, this);
 
-		this.selectCounter = 100; 	// Set fade counter
+		this.selectCounter = 400; 	// Activation counter
 		this.timerDirection = 0;	// 0 nothing, 1 up, -1 down
 		this.playhead = 0; 			// Whenever this thing was triggered
 		this.timer = 0;				// The actual timer
@@ -212,12 +212,13 @@ var itemView = Backbone.View.extend({
 
 		// Handling the animation at the end
 		if(!this.model.get("isActive")) {
-			this.$el.css('background-color', 'white');
+			this.$el.css('background-color', 'rgba(255,200,200,1)');
 			this.$el.css("height", ((this.time / this.selectCounter) * 100) + "%" );
+			this.$el.css("padding-top",'0');
 		} else 
 		if(this.model.get("isActive")) {
 			this.$el.css('background-color', 'black');
-			this.$el.css('height', ((this.playhead / this.model.get("duration"))*10) + "%");
+			this.$el.css('padding-top', ((this.playhead / this.model.get("duration"))*10) + "%");
 		} 
 	}
 
