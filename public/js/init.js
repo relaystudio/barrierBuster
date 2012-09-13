@@ -119,7 +119,7 @@ var itemView = Backbone.View.extend({
 	, className: 'barrierItem'
 	, template: _.template($("#itemTemplate").html())
 	, events: {
-		'click': 'done'
+		'click': 'tease'
 		, 'mouseenter': 'select'
 		, 'mouseleave': 'deselect'
 		, 'dblClick': 'active'
@@ -130,13 +130,13 @@ var itemView = Backbone.View.extend({
 		this.bind('change', this.render, this);
 		this.bind('destroy', this.done, this);
 
-		this.selectCounter = 1000; 	// Set fade counter
-		this.selected = 0;			// Last time hovered
+		this.selectCounter = 100; 	// Set fade counter
+		this.timerDirection = 0;	// 0 nothing, 1 up, -1 down
 		this.playhead = 0; 			// Whenever this thing was triggered
 		this.timer = 0;				// The actual timer
 		this.time = 0;				// What the timer is counting
 		(function(view) {
-				view.timer = window.setInterval(function() { view.update(); }, 100);
+				view.timer = window.setInterval(function() { view.update(); }, 1);
 			})(this);
 		this.update();
 	}
@@ -147,85 +147,78 @@ var itemView = Backbone.View.extend({
 		} else
 		if(!state) {
 			this.model.set('isActive',false);
-			console.log(this.model.get("name") + " is currently active.");
 		}
+	}
+
+	, tease: function() { // Poor placeholder for attractor
+		this.$el.slideUp(100).slideDown(20).slideUp(100).slideDown(100);
 	}
 	
 	, select: function() {
-		if(!this.model.isActive) {
-
-			var currentTime = Math.round(new Date().getTime() / 1000);
-
-			if( (currentTime - this.selected) > this.selectCounter ) {
-				this.active()
-			}
-
-			
-		
-		}
+		console.log("select " + this.model.get("name"));
+		this.timerDirection = 1;
 	}
 
 	, deselect: function() {
-		console.log("deselect");
+		console.log("deselect " + this.model.get("name"));
+		if(this.time >= 0) {
+			this.timerDirection = -1;
+		}
+	}
 
-		if(!this.model.get("isActive")) {
-			console.log("Decrementing");
-			(function(view) {
-				view.timer = window.setInterval(function() { view.decrementTimer(); }, 100);
-			})(this);
+	, update: function() { // This handles all update stuff and runs every 50-100ms
 		
-		}
-	}
+		// Width of the object in relation to the rest of the collection
+		this.$el.css('width', ( ( 99 / ItemCollection.length) ) + "%" )
 
-	, incrementTimer: function() {
-		if(this.time >= this.selectCounter) {
-			(function(view) { view.timer = clearInterval(view.timer) })(this);
-			this.active(true);
-		} else
-		if(this.time < this.selectCounter) {
-			this.time += 1;	
-		}
-		this.update();
-	}
-
-	, decrementTimer: function() {
-		if(this.time <= 0) {
-			(function(view) { view.timer = clearInterval(view.timer) })(this);
-		}
-		this.time -= 1;
-		this.update();
-	}
-
-	, contentDisplay: function() {
-		if(playhead == 0) { // if the content is just starting
-			(function(view) {
-				view.timer = window.setInterval(function() { view.contentDisplay(); }, 1);
-				})(this);
-		} else
-		if(playhead > this.model.get("duration")) { // If the content is finished
-			clearInterval(this.timer);
-			this.model.set('isActive', false);
-			this.update();
-		} else
-		if(playhead != 0) { // if the content is in the process of "playing"
-			playhead += 1;
-		}
-	}
-
-	, update: function() {
-		this.$el.css('width', ( ( 99	 / ItemCollection.length) ) + "%" )
-		
+		// If not active
 		if(!this.model.get("isActive")) {
-			this.selected = new Date().getTime() / 1000; // Unix timestampz
-			this.$el.css("height", ((this.time / this.selectCounter)*100) + "%" );
+
+			if(this.time < 0) {
+				this.timerDirection = 0;
+				this.time = 0;
+			} else
+			if(this.time >= this.selectCounter) {
+				this.timerDirection = this.playhead = 0; // Stop the timer and setup playhead
+				this.active(true);
+			}
+
+
+			if(this.timerDirection == 1) {
+				this.time += 1;	
+			} else 
+			if(this.timerDirection == -1) {
+				this.time -= 1;
+			}
+		} else
+
+		// If active
+		if(this.model.get("isActive")) {
+			if(this.playhead == 0) { // if the content is just starting, say "Start"
+				this.playhead = 1;
+				console.log("Starting playhead");
+			} else
+			if(this.playhead >= this.model.get("duration")) { // If the content is finished, i.e. over duration
+				console.log(this.model.get("name") + " done playing, reverting")
+				this.active(false); // Set active to false
+				this.time = this.selectCounter-1; // Fully activated, ready to revert
+				this.timerDirection = -1; // Revert direction
+			} else
+			if(this.playhead >= 1) { // if the content is in the process of "playing," increment
+				this.playhead += 1; 
+				console.log("Playing");
+			}
+		}
+
+		// Handling the animation at the end
+		if(!this.model.get("isActive")) {
+			this.$el.css('background-color', 'white');
+			this.$el.css("height", ((this.time / this.selectCounter) * 100) + "%" );
 		} else 
 		if(this.model.get("isActive")) {
 			this.$el.css('background-color', 'black');
-		} else {
-			
-
-			}
-		this.render();
+			this.$el.css('height', ((this.playhead / this.model.get("duration"))*10) + "%");
+		} 
 	}
 
 	, render: function() {
