@@ -86,26 +86,35 @@ var ItemCollection = new itemCollection;
 		Primary title view (Living identity?)
 ************************************************************/
 var itemEntryView = Backbone.View.extend({
-		el: $('#entryFormAnchor')
-		, enterTemplate: _.template($('#dataEntry').html())
+		el: $('#itemEntryAnchor')
+		, template: _.template($('#itemEntryTemplate').html())
 		, events: {
 			'click #submit' : 'saveOnClick'
 			, 'keypress .next' : 'saveOnEnter'
 			, 'keypress .next' : 'focusNext'
+			, 'click .cancel' : 'done'
 		}
 		
 		, initialize: function() {
 //			$el.html(this.template);
-			if(MeaningList.timeLeftToday() > 0) {
-				$(this.el).hide().html(this.enterTemplate).trigger('entryViewDown').slideDown(700);
-			} else {
-				$(this.el).hide().html(this.failTemplate).slideDown(700);
-			}
+			console.log('Triggering itemEntryView');
+			$.ajax({
+				url: './filelist'
+				, success: function(data) {
+					for(var key in data){
+						$('select#path').append('<option>' + data[key] + '</option>');
+					}
+				}
+				, 
+			})
+			this.$el.html(this.template);
 		}
 		, saveOnClick: function(e) {
 			this.save();
 			}
 		, saveOnEnter: function(e) {
+			if(e.keyCode == 27);
+				this.done();
 			if(e.keyCode !== 13) return;
 			this.save();
 		}
@@ -124,9 +133,11 @@ var itemEntryView = Backbone.View.extend({
 			this.done();
 		
 		}
-		, focusDuration: function(e) {
+		, focusNext: function(e) {
 			if(e.keyCode == 13)
 				$(this).next().focus();
+			else if(e.keyCode == 27);
+				this.done();
 		}
 		, done: function() {
 			$(this.el).slideUp(100);
@@ -293,11 +304,13 @@ var AppView = Backbone.View.extend({
 	el: $("#content")
 	
 	, events: {
-		
+		'keyup' : 'debug'
 	}
 
 	, initialize: function() {
 		_.bindAll(this, 'addOne', 'addAll');
+		_.bindAll(this);
+          $(document).bind('keyup', this.debug);
 		ItemCollection.bind('add', this.addOne, this);
 		ItemCollection.bind('reset', this.addAll, this);
 		ItemCollection.bind('all', this.render, this);
@@ -305,7 +318,6 @@ var AppView = Backbone.View.extend({
 		ItemCollection.fetch( {
 			success: function(model, response) {
 				console.log('Returned collection' + JSON.stringify(model));
-
 			}
 			, error: function(model, response) {
 				console.log('Error' + JSON.stringify(model) + " err: " + JSON.stringify(response));
@@ -314,6 +326,17 @@ var AppView = Backbone.View.extend({
 		(function(view) {
 				window.setInterval(function() { view.updateScene(); }, 50);
 			})(this);	
+	}
+
+	, debug: function(e) {
+		console.log('Triggering debug');
+		if(e.keyCode == 65) { // a
+			if(!this.ItemEntryView)
+				this.ItemEntryView = new itemEntryView();
+			else {
+				this.ItemEntryView.initialize();
+			}
+		}
 	}
 
 	, updateScene: function() {

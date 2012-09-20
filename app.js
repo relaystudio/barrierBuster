@@ -41,9 +41,9 @@ app.get('/', function(req, res){
 });
 
 app.get('/filelist', function(req, res){
-  var contents = fs.readdirSync('/public/res/')
+  var contents = fs.readdirSync(__dirname+'/public/res/')
   console.log(JSON.stringify(contents));
-  res.xhr(contents);
+  res.send(contents);
 });
 
 app.listen(3000);
