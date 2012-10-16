@@ -8,8 +8,12 @@
  * Super simple server to handle feedback requests and log errors
  */
 
-var express = require('express'),
-    fs = require('fs');
+var express = require('express')
+    , osc = require('osc4node')
+    , socket = require('socket.io')
+    , fs = require('fs');
+
+var oscClient, oscServer;
 
 var app = module.exports = express.createServer();
 
@@ -32,8 +36,15 @@ app.configure('production', function(){
   app.use(express.errorHandler()); 
 });
 
-// Routes
 
+oscClient = new osc.Client('127.0.0.1', 12345);
+oscServer = new osc.Server(12345, '127.0.0.1');
+
+oscServer.on('/person', function(data, info) {
+  console.log(data);
+})
+
+// Routes
 app.get('/', function(req, res){
   res.render('index', {
     title: 'Express'

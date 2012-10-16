@@ -8,6 +8,12 @@ Backbone.View.prototype.close = function () {
     this.unbind();
 };
 
+// Threejs Globals
+var isGL = true;
+var scene, renderer, camera;
+
+
+// Backbone model
 var itemModel = Backbone.Model.extend({
 
 	// This model ONLY keeps track of what is passed back from the Node service, i.e. media types and info,
@@ -199,10 +205,18 @@ var itemView = Backbone.View.extend({
 		this.playhead = 0; 			// Whenever this thing was triggered
 		this.timer = 0;				// The actual timer
 		this.time = 0;				// What the timer is counting
+
 		(function(view) {
 				view.timer = window.setInterval(function() { view.update(); }, 1);
 			})(this);
+
+		if(isGL)
+			this.glInit();
 		this.update();
+	}
+
+	, glInit: function() {
+
 	}
 
 	, active: function(state) { // Quickly pass active or not active to the model
@@ -215,7 +229,14 @@ var itemView = Backbone.View.extend({
 	}
 
 	, tease: function() { // Poor placeholder for attractor
-		this.$el.slideUp(100).slideDown(20).slideUp(100).slideDown(100);
+		if(isGL)
+			//this.$el.
+		else
+			this.$el.slideUp(100).slideDown(20).slideUp(100).slideDown(100);
+	}
+
+	, glTease: function() {
+
 	}
 	
 	, select: function() {
@@ -233,7 +254,10 @@ var itemView = Backbone.View.extend({
 	, update: function() { // This handles all update stuff and runs every 50-100ms
 		
 		// Width of the object in relation to the rest of the collection
-		this.$el.css('width', ( ( 99 / ItemCollection.length) ) + "%" )
+		if(isGL)
+
+		else
+			this.$el.css('width', ( ( 99 / ItemCollection.length) ) + "%" )
 
 		// If not active
 		if(!this.model.get("isActive")) {
@@ -308,9 +332,13 @@ var AppView = Backbone.View.extend({
 	}
 
 	, initialize: function() {
+		// Declare elements
+	    var camera, scene, renderer;
+	    var geometry, material, mesh;
+
 		_.bindAll(this, 'addOne', 'addAll');
 		_.bindAll(this);
-          $(document).bind('keyup', this.debug);
+		$(document).bind('keyup', this.debug);
 		ItemCollection.bind('add', this.addOne, this);
 		ItemCollection.bind('reset', this.addAll, this);
 		ItemCollection.bind('all', this.render, this);
@@ -323,15 +351,47 @@ var AppView = Backbone.View.extend({
 				console.log('Error' + JSON.stringify(model) + " err: " + JSON.stringify(response));
 			}
 		});
+		// Setting up the scene timer
 		(function(view) {
 				window.setInterval(function() { view.updateScene(); }, 50);
 			})(this);	
+
+		// Setting up the threejs context
+		this.glInit();
+
+	}
+
+	, glInit: function() {
+
+		camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
+		camera.position.z = 1000;
+
+		scene = new THREE.Scene();
+
+		renderer = new THREE.CanvasRenderer();
+		renderer.setSize( window.innerWidth, window.innerHeight );
+		geometry = new THREE.CubeGeometry( 200, 200, 200 );
+		material = new THREE.MeshBasicMaterial( { color: 0xff0000, wireframe: true } );
+
+		mesh = new THREE.Mesh( geometry, material );
+		scene.add( mesh );
+
+		document.body.appendChild( renderer.domElement );
+
+	}
+
+	, glUpdate: function() {
+        requestAnimationFrame( animate );        
+	}
+
+	, glRender: function() {
+		renderer.render( scene, camera );
 	}
 
 	, debug: function(e) {
 		console.log('Triggering debug');
 		if(e.keyCode == 65) { // a
-			if(!this.ItemEntryView)
+			if(!this.itemEntryView)
 				this.ItemEntryView = new itemEntryView();
 			else {
 				this.ItemEntryView.initialize();
